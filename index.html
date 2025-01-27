@@ -345,7 +345,8 @@
 
             // Save Matrix button
             document.getElementById('save-matrix-btn').addEventListener('click', () => {
-                const title = prompt('Enter a title for this matrix:');
+                const defaultTitle = `Matrix - ${new Date().toLocaleDateString()}`;
+                const title = prompt('Enter a title for this matrix:', defaultTitle);
                 if (title) {
                     state.savedMatrices.push({
                         title: title,
