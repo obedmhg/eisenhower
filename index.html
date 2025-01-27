@@ -156,13 +156,26 @@
             align-items: center;
         }
 
-        .saved-matrices button {
-            background: #4CAF50;
-            color: white;
+        .matrix-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .matrix-buttons button {
             padding: 5px 10px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+        }
+
+        .load-btn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #ff4444;
+            color: white;
         }
     </style>
 </head>
@@ -214,7 +227,7 @@
 
     <script>
         let state = {
-            tasks: [],
+            currentTasks: [],
             savedMatrices: []
         };
         let activeQuadrant = null;
@@ -237,7 +250,7 @@
             document.querySelectorAll('.task-list').forEach(ul => {
                 ul.innerHTML = '';
                 const quadrantId = ul.closest('.quadrant').id;
-                const tasks = state.tasks.filter(task => task.quadrant === quadrantId);
+                const tasks = state.currentTasks.filter(task => task.quadrant === quadrantId);
                 
                 tasks.forEach(task => {
                     const li = document.createElement('li');
@@ -257,19 +270,16 @@
         function renderSavedMatrices() {
             const savedList = document.getElementById('saved-list');
             savedList.innerHTML = '';
-            state.savedMatrices.forEach((matrix, index) => {
+            
+            state.savedMatrices.forEach(matrix => {
                 const li = document.createElement('li');
-                li.textContent = matrix.title;
-                
-                const loadBtn = document.createElement('button');
-                loadBtn.textContent = 'Load';
-                loadBtn.addEventListener('click', () => {
-                    state.tasks = matrix.tasks;
-                    saveToLocalStorage();
-                    renderTasks();
-                });
-
-                li.appendChild(loadBtn);
+                li.innerHTML = `
+                    <span>${matrix.title}</span>
+                    <div class="matrix-buttons">
+                        <button class="load-btn" data-id="${matrix.id}">Load</button>
+                        <button class="delete-btn" data-id="${matrix.id}">Delete</button>
+                    </div>
+                `;
                 savedList.appendChild(li);
             });
         }
@@ -302,7 +312,7 @@
                     quadrant: activeQuadrant
                 };
 
-                state.tasks.push(task);
+                state.currentTasks.push(task);
                 saveToLocalStorage();
                 renderTasks();
                 input.value = '';
@@ -329,7 +339,7 @@
                     if (e.target.tagName === 'BUTTON') {
                         const li = e.target.closest('li');
                         const taskId = parseInt(li.dataset.taskId);
-                        state.tasks = state.tasks.filter(task => task.id !== taskId);
+                        state.currentTasks = state.currentTasks.filter(task => task.id !== taskId);
                         saveToLocalStorage();
                         renderTasks();
                     }
@@ -338,20 +348,41 @@
 
             // New Matrix button
             document.getElementById('new-matrix-btn').addEventListener('click', () => {
-                state.tasks = [];
+                state.currentTasks = [];
                 saveToLocalStorage();
                 renderTasks();
             });
 
             // Save Matrix button
             document.getElementById('save-matrix-btn').addEventListener('click', () => {
-                const defaultTitle = `Matrix - ${new Date().toLocaleDateString()}`;
-                const title = prompt('Enter a title for this matrix:', defaultTitle);
-                if (title) {
-                    state.savedMatrices.push({
-                        title: title,
-                        tasks: [...state.tasks]
-                    });
+                const defaultTitle = `Matrix ${new Date().toLocaleDateString()}`;
+                const title = prompt('Enter matrix title:', defaultTitle) || defaultTitle;
+                
+                state.savedMatrices.push({
+                    id: Date.now(),
+                    title: title,
+                    tasks: [...state.currentTasks]
+                });
+                
+                saveToLocalStorage();
+                renderSavedMatrices();
+            });
+
+            // Handle saved matrix actions
+            document.getElementById('saved-list').addEventListener('click', (e) => {
+                const matrixId = parseInt(e.target.dataset.id);
+                
+                if (e.target.classList.contains('load-btn')) {
+                    const matrix = state.savedMatrices.find(m => m.id === matrixId);
+                    if (matrix) {
+                        state.currentTasks = [...matrix.tasks];
+                        saveToLocalStorage();
+                        renderTasks();
+                    }
+                }
+                
+                if (e.target.classList.contains('delete-btn')) {
+                    state.savedMatrices = state.savedMatrices.filter(m => m.id !== matrixId);
                     saveToLocalStorage();
                     renderSavedMatrices();
                 }
