@@ -225,120 +225,97 @@
         </div>
     </div>
 
-    <script>
+     <script>
         let state = {
             currentTasks: [],
             savedMatrices: []
         };
         let activeQuadrant = null;
 
-        // Load from local storage
         function loadFromLocalStorage() {
             const storedState = localStorage.getItem('eisenhowerApp');
-            if (storedState) {
-                state = JSON.parse(storedState);
-            }
+            state = storedState ? JSON.parse(storedState) : {
+                currentTasks: [],
+                savedMatrices: []
+            };
         }
 
-        // Save to local storage
         function saveToLocalStorage() {
             localStorage.setItem('eisenhowerApp', JSON.stringify(state));
         }
 
-        // Render tasks
         function renderTasks() {
             document.querySelectorAll('.task-list').forEach(ul => {
                 ul.innerHTML = '';
                 const quadrantId = ul.closest('.quadrant').id;
-                const tasks = state.currentTasks.filter(task => task.quadrant === quadrantId);
-                
-                tasks.forEach(task => {
-                    const li = document.createElement('li');
-                    li.dataset.taskId = task.id;
-                    li.textContent = task.text;
-                    
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.textContent = 'Delete';
-                    li.appendChild(deleteBtn);
-                    
-                    ul.appendChild(li);
-                });
+                state.currentTasks
+                    .filter(task => task.quadrant === quadrantId)
+                    .forEach(task => {
+                        const li = document.createElement('li');
+                        li.dataset.taskId = task.id;
+                        li.innerHTML = `
+                            <span>${task.text}</span>
+                            <button class="task-delete-btn">Delete</button>
+                        `;
+                        ul.appendChild(li);
+                    });
             });
         }
 
-        // Render saved matrices
         function renderSavedMatrices() {
             const savedList = document.getElementById('saved-list');
-            savedList.innerHTML = '';
-            
-            state.savedMatrices.forEach(matrix => {
-                const li = document.createElement('li');
-                li.innerHTML = `
+            savedList.innerHTML = state.savedMatrices.map(matrix => `
+                <li>
                     <span>${matrix.title}</span>
                     <div class="matrix-buttons">
                         <button class="load-btn" data-id="${matrix.id}">Load</button>
                         <button class="delete-btn" data-id="${matrix.id}">Delete</button>
                     </div>
-                `;
-                savedList.appendChild(li);
-            });
+                </li>
+            `).join('');
         }
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadFromLocalStorage();
             renderTasks();
             renderSavedMatrices();
 
-            // Add task buttons
-            document.querySelectorAll('.add-task-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    activeQuadrant = this.closest('.quadrant').id;
+            // Add Task Buttons
+            document.querySelectorAll('.add-task-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeQuadrant = btn.closest('.quadrant').id;
                     document.querySelector('.overlay').style.display = 'flex';
                     document.getElementById('task-input').focus();
                 });
             });
 
-            // Overlay add task button
-            document.getElementById('add-task-overlay-btn').addEventListener('click', function() {
+            // Add Task from Overlay
+            document.getElementById('add-task-overlay-btn').addEventListener('click', () => {
                 const input = document.getElementById('task-input');
                 const text = input.value.trim();
-                
-                if (!text) return;
-
-                const task = {
-                    id: Date.now(),
-                    text: text,
-                    quadrant: activeQuadrant
-                };
-
-                state.currentTasks.push(task);
-                saveToLocalStorage();
-                renderTasks();
-                input.value = '';
-                document.querySelector('.overlay').style.display = 'none';
-            });
-
-            // Overlay cancel button
-            document.querySelector('.overlay .cancel').addEventListener('click', function() {
-                document.querySelector('.overlay').style.display = 'none';
-                document.getElementById('task-input').value = '';
-            });
-
-            // Close overlay when clicking outside
-            document.querySelector('.overlay').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.style.display = 'none';
-                    document.getElementById('task-input').value = '';
+                if (text) {
+                    state.currentTasks.push({
+                        id: Date.now(),
+                        text: text,
+                        quadrant: activeQuadrant
+                    });
+                    saveToLocalStorage();
+                    renderTasks();
+                    input.value = '';
+                    document.querySelector('.overlay').style.display = 'none';
                 }
             });
 
-            // Delete task handling
+            // Cancel Overlay
+            document.querySelector('.cancel').addEventListener('click', () => {
+                document.querySelector('.overlay').style.display = 'none';
+            });
+
+            // Delete Task
             document.querySelectorAll('.task-list').forEach(ul => {
-                ul.addEventListener('click', function(e) {
-                    if (e.target.tagName === 'BUTTON') {
-                        const li = e.target.closest('li');
-                        const taskId = parseInt(li.dataset.taskId);
+                ul.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('task-delete-btn')) {
+                        const taskId = parseInt(e.target.closest('li').dataset.taskId);
                         state.currentTasks = state.currentTasks.filter(task => task.id !== taskId);
                         saveToLocalStorage();
                         renderTasks();
@@ -346,32 +323,29 @@
                 });
             });
 
-            // New Matrix button
+            // New Matrix
             document.getElementById('new-matrix-btn').addEventListener('click', () => {
                 state.currentTasks = [];
                 saveToLocalStorage();
                 renderTasks();
             });
 
-            // Save Matrix button
+            // Save Matrix
             document.getElementById('save-matrix-btn').addEventListener('click', () => {
                 const defaultTitle = `Matrix ${new Date().toLocaleDateString()}`;
                 const title = prompt('Enter matrix title:', defaultTitle) || defaultTitle;
-                
                 state.savedMatrices.push({
                     id: Date.now(),
                     title: title,
                     tasks: [...state.currentTasks]
                 });
-                
                 saveToLocalStorage();
                 renderSavedMatrices();
             });
 
-            // Handle saved matrix actions
+            // Load/Delete Saved Matrices
             document.getElementById('saved-list').addEventListener('click', (e) => {
                 const matrixId = parseInt(e.target.dataset.id);
-                
                 if (e.target.classList.contains('load-btn')) {
                     const matrix = state.savedMatrices.find(m => m.id === matrixId);
                     if (matrix) {
@@ -380,11 +354,17 @@
                         renderTasks();
                     }
                 }
-                
                 if (e.target.classList.contains('delete-btn')) {
                     state.savedMatrices = state.savedMatrices.filter(m => m.id !== matrixId);
                     saveToLocalStorage();
                     renderSavedMatrices();
+                }
+            });
+
+            // Close overlay on outside click
+            document.querySelector('.overlay').addEventListener('click', (e) => {
+                if (e.target === document.querySelector('.overlay')) {
+                    document.querySelector('.overlay').style.display = 'none';
                 }
             });
         });
