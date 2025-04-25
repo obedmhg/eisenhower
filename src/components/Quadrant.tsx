@@ -27,13 +27,13 @@ const Quadrant: React.FC<QuadrantProps> = ({ info, tasks, onAddTask }) => {
   return (
     <div 
       ref={drop}
-      className={`border-2 rounded-lg p-4 min-h-[300px] relative ${info.color} ${
+      className={`border-2 rounded-lg p-4 min-h-[300px] relative ${info.color} dark:bg-opacity-10 ${
         isOver ? 'ring-2 ring-blue-500' : ''
       }`}
     >
       <div className="mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">{info.title}</h2>
-        <p className="text-sm text-gray-600 mt-1">{info.subtitle}</p>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{info.title}</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{info.subtitle}</p>
       </div>
       
       <ul className="space-y-2">
@@ -44,7 +44,7 @@ const Quadrant: React.FC<QuadrantProps> = ({ info, tasks, onAddTask }) => {
       
       <button
         onClick={onAddTask}
-        className="absolute bottom-4 right-4 bg-green-500 hover:bg-green-600 text-white p-2 rounded-full flex items-center justify-center transition-colors duration-200"
+        className="absolute bottom-4 right-4 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white p-2 rounded-full flex items-center justify-center transition-colors duration-200"
         aria-label="Add task"
       >
         <Plus size={20} />
@@ -53,4 +53,4 @@ const Quadrant: React.FC<QuadrantProps> = ({ info, tasks, onAddTask }) => {
   );
 };
 
-export default Quadrant;
+export default Quadrant
