@@ -71,16 +71,18 @@ npm run dev
 ```
 
 
-## Available scripts
-	•	npm run dev — Start local development server
-	•	npm run build — Build production-ready app
-	•	npm run preview — Preview the production build locally
-	•	npm run lint — Run ESLint on the project
+## 📋 Available scripts
+
+		npm run dev — Start local development server
+		npm run build — Build production-ready app
+		npm run preview — Preview the production build locally
+		npm run lint — Run ESLint on the project
 
 ## 📢 Notes
-	•	Fully optimized for desktop browsers.
-	•	Offline-ready after first load.
-	•	Mobile experience is functional but best on larger screens.
+
+	Fully optimized for desktop browsers.
+	Offline-ready after first load.
+	Mobile experience is functional but best on larger screens.
 
 
 Made with ❤️ using bolt.new
