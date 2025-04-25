@@ -1,8 +1,9 @@
 import React from 'react';
+import { Trash2 } from 'lucide-react';
 import { useMatrix } from '../context/MatrixContext';
 
 const SavedMatrices: React.FC = () => {
-  const { savedMatrices, loadMatrix } = useMatrix();
+  const { savedMatrices, loadMatrix, deleteMatrix } = useMatrix();
 
   if (savedMatrices.length === 0) {
     return null;
@@ -18,12 +19,25 @@ const SavedMatrices: React.FC = () => {
             className="flex justify-between items-center p-3 bg-gray-50 rounded-md border border-gray-200"
           >
             <span className="text-gray-700">{matrix.title}</span>
-            <button
-              onClick={() => loadMatrix(matrix.id)}
-              className="px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors duration-200"
-            >
-              Load
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => loadMatrix(matrix.id)}
+                className="px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors duration-200"
+              >
+                Load
+              </button>
+              <button
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to delete this matrix?')) {
+                    deleteMatrix(matrix.id);
+                  }
+                }}
+                className="p-1 text-red-500 hover:text-red-700 transition-colors duration-200"
+                aria-label="Delete matrix"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
           </li>
         ))}
       </ul>

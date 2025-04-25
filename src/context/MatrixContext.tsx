@@ -10,6 +10,7 @@ interface MatrixContextType {
   createNewMatrix: () => void;
   saveMatrix: (title: string) => void;
   loadMatrix: (matrixId: number) => void;
+  deleteMatrix: (matrixId: number) => void;
 }
 
 const MatrixContext = createContext<MatrixContextType | undefined>(undefined);
@@ -84,6 +85,10 @@ export const MatrixProvider: React.FC<MatrixProviderProps> = ({ children }) => {
     }
   };
 
+  const deleteMatrix = (matrixId: number) => {
+    setSavedMatrices(savedMatrices.filter(matrix => matrix.id !== matrixId));
+  };
+
   const value = {
     tasks,
     savedMatrices,
@@ -92,7 +97,8 @@ export const MatrixProvider: React.FC<MatrixProviderProps> = ({ children }) => {
     moveTask,
     createNewMatrix,
     saveMatrix,
-    loadMatrix
+    loadMatrix,
+    deleteMatrix
   };
 
   return (
