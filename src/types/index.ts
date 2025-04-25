@@ -19,6 +19,5 @@ export type QuadrantId =
 export interface QuadrantInfo {
   id: QuadrantId;
   title: string;
-  subtitle: string;
   color: string;
 }

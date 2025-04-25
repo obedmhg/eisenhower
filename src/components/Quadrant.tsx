@@ -31,10 +31,7 @@ const Quadrant: React.FC<QuadrantProps> = ({ info, tasks, onAddTask }) => {
         isOver ? 'ring-2 ring-blue-500' : ''
       }`}
     >
-      <div className="mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">{info.title}</h2>
-        <p className="text-sm text-gray-600 mt-1">{info.subtitle}</p>
-      </div>
+      <h2 className="text-xl font-semibold mb-4 text-gray-800">{info.title}</h2>
       
       <ul className="space-y-2">
         {tasks.map(task => (
