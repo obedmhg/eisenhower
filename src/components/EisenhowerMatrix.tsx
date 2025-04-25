@@ -9,22 +9,26 @@ import { useMatrix } from '../context/MatrixContext';
 const quadrants: QuadrantInfo[] = [
   { 
     id: 'urgent-important', 
-    title: 'Urgent/Important', 
+    title: 'Do',
+    subtitle: 'Urgent & Important',
     color: 'bg-red-50 border-red-400' 
   },
   { 
     id: 'urgent-not-important', 
-    title: 'Urgent/Not Important', 
+    title: 'Delegate',
+    subtitle: 'Urgent & Not Important',
     color: 'bg-orange-50 border-orange-400' 
   },
   { 
     id: 'not-urgent-important', 
-    title: 'Not Urgent/Important', 
+    title: 'Plan',
+    subtitle: 'Not Urgent & Important',
     color: 'bg-blue-50 border-blue-400' 
   },
   { 
     id: 'not-urgent-not-important', 
-    title: 'Not Urgent/Not Important', 
+    title: 'Eliminate',
+    subtitle: 'Not Urgent & Not Important',
     color: 'bg-purple-50 border-purple-400' 
   }
 ];
