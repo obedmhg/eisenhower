@@ -11,6 +11,8 @@ interface MatrixContextType {
   saveMatrix: (title: string) => void;
   loadMatrix: (matrixId: number) => void;
   deleteMatrix: (matrixId: number) => void;
+  toggleTaskStatus: (taskId: number) => void;
+  updateTaskText: (taskId: number, newText: string) => void;
 }
 
 const MatrixContext = createContext<MatrixContextType | undefined>(undefined);
@@ -31,7 +33,6 @@ export const MatrixProvider: React.FC<MatrixProviderProps> = ({ children }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [savedMatrices, setSavedMatrices] = useState<SavedMatrix[]>([]);
 
-  // Load state from localStorage on initial render
   useEffect(() => {
     const storedState = localStorage.getItem('eisenhowerApp');
     if (storedState) {
@@ -41,7 +42,6 @@ export const MatrixProvider: React.FC<MatrixProviderProps> = ({ children }) => {
     }
   }, []);
 
-  // Save state to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('eisenhowerApp', JSON.stringify({ tasks, savedMatrices }));
   }, [tasks, savedMatrices]);
@@ -50,7 +50,8 @@ export const MatrixProvider: React.FC<MatrixProviderProps> = ({ children }) => {
     const newTask: Task = {
       id: Date.now(),
       text,
-      quadrant
+      quadrant,
+      completed: false
     };
     setTasks([...tasks, newTask]);
   };
@@ -62,6 +63,18 @@ export const MatrixProvider: React.FC<MatrixProviderProps> = ({ children }) => {
   const moveTask = (taskId: number, targetQuadrant: QuadrantId) => {
     setTasks(tasks.map(task => 
       task.id === taskId ? { ...task, quadrant: targetQuadrant } : task
+    ));
+  };
+
+  const toggleTaskStatus = (taskId: number) => {
+    setTasks(tasks.map(task =>
+      task.id === taskId ? { ...task, completed: !task.completed } : task
+    ));
+  };
+
+  const updateTaskText = (taskId: number, newText: string) => {
+    setTasks(tasks.map(task =>
+      task.id === taskId ? { ...task, text: newText } : task
     ));
   };
 
@@ -98,7 +111,9 @@ export const MatrixProvider: React.FC<MatrixProviderProps> = ({ children }) => {
     createNewMatrix,
     saveMatrix,
     loadMatrix,
-    deleteMatrix
+    deleteMatrix,
+    toggleTaskStatus,
+    updateTaskText
   };
 
   return (

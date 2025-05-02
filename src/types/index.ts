@@ -2,6 +2,7 @@ export interface Task {
   id: number;
   text: string;
   quadrant: QuadrantId;
+  completed: boolean;
 }
 
 export interface SavedMatrix {
