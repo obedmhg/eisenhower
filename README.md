@@ -64,8 +64,8 @@ When exporting your matrix, you'll get a clean, formatted text output like this:
 If you want to run the project locally:
 
 ```bash
-git clone https://github.com/your-username/eisenhower-matrix-app.git
-cd eisenhower-matrix-app
+git clone https://github.com/obedmhg/eisenhower.git
+cd eisenhower
 npm install
 npm run dev
 ```
