@@ -31,6 +31,17 @@ function AppContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Eisenhower Matrix</h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Built with{' '}
+              <a 
+                href="https://bolt.new" 
+                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                bolt.new
+              </a>
+            </p>
           </div>
           
           <MatrixProvider>

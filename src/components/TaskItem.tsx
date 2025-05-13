@@ -100,4 +100,4 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
   );
 };
 
-export default TaskItem
+export default TaskItem;
