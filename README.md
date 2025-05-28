@@ -32,6 +32,7 @@ This is a modern web application to help you create and manage **Eisenhower Matr
 - **Lucide React** for icons
 - **ESLint** + **TypeScript ESLint** for linting
 - Hosted on **Netlify**
+- **Posthog** for analytics
 
 ## 📦 Local Storage
 
