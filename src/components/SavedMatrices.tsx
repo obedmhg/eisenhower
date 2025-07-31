@@ -6,40 +6,41 @@ import { SavedMatrix, Task, QuadrantId } from '../types';
 const SavedMatrices: React.FC = () => {
   const { savedMatrices, loadMatrix, deleteMatrix } = useMatrix();
 
-  const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
-    const quadrantTitles: Record<QuadrantId, { title: string, subtitle: string }> = {
-      'urgent-important': { title: 'Do', subtitle: 'Urgent & Important' },
-      'urgent-not-important': { title: 'Delegate', subtitle: 'Urgent & Not Important' },
-      'not-urgent-important': { title: 'Plan', subtitle: 'Not Urgent & Important' },
-      'not-urgent-not-important': { title: 'Eliminate', subtitle: 'Not Urgent & Not Important' }
-    };
-
-    const groupTasksByQuadrant = (tasks: Task[]) => {
-      return tasks.reduce((acc, task) => {
-        if (!acc[task.quadrant]) {
-          acc[task.quadrant] = [];
-        }
-        acc[task.quadrant].push(task);
-        return acc;
-      }, {} as Record<QuadrantId, Task[]>);
-    };
-
-    const tasksGrouped = groupTasksByQuadrant(matrix.tasks);
-    let markdown = `# ${matrix.title}\n\n`;
-
-    Object.entries(quadrantTitles).forEach(([quadrantId, { title, subtitle }]) => {
-      const tasks = tasksGrouped[quadrantId as QuadrantId] || [];
-      if (tasks.length > 0) {
-        markdown += `## ${title} (${subtitle})\n\n`;
-        tasks.forEach(task => {
-          markdown += `- ${task.text}\n`;
-        });
-        markdown += '\n';
-      }
-    });
-
-    return markdown;
+const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
+  const quadrantTitles: Record<QuadrantId, { title: string, subtitle: string }> = {
+    'urgent-important': { title: 'Do', subtitle: 'Urgent & Important' },
+    'urgent-not-important': { title: 'Delegate', subtitle: 'Urgent & Not Important' },
+    'not-urgent-important': { title: 'Plan', subtitle: 'Not Urgent & Important' },
+    'not-urgent-not-important': { title: 'Eliminate', subtitle: 'Not Urgent & Not Important' }
   };
+
+  const groupTasksByQuadrant = (tasks: Task[]) => {
+    return tasks.reduce((acc, task) => {
+      if (!acc[task.quadrant]) {
+        acc[task.quadrant] = [];
+      }
+      acc[task.quadrant].push(task);
+      return acc;
+    }, {} as Record<QuadrantId, Task[]>);
+  };
+
+  const tasksGrouped = groupTasksByQuadrant(matrix.tasks);
+  let markdown = `# ${matrix.title}\n\n`;
+
+  Object.entries(quadrantTitles).forEach(([quadrantId, { title, subtitle }]) => {
+    const tasks = tasksGrouped[quadrantId as QuadrantId] || [];
+    if (tasks.length > 0) {
+      markdown += `## ${title} (${subtitle})\n\n`;
+      tasks.forEach(task => {
+        const taskText = task.completed ? `~~${task.text}~~` : task.text;
+        markdown += `- ${taskText}\n`;
+      });
+      markdown += '\n';
+    }
+  });
+
+  return markdown;
+};
 
   const exportAllMatrices = () => {
     const allMarkdown = savedMatrices.map(matrix => formatMatrixToMarkdown(matrix)).join('\n---\n\n');
