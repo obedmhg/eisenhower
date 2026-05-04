@@ -1,41 +1,23 @@
-import React from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { Github, Sun, Moon } from 'lucide-react';
+import { Github } from 'lucide-react';
 import EisenhowerMatrix from './components/EisenhowerMatrix';
+import Header from './components/Header';
 import { MatrixProvider } from './context/MatrixContext';
-import { ThemeProvider, useTheme } from './context/ThemeContext';
-
-function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme();
-  return (
-    <button
-      onClick={toggleTheme}
-      className="fixed top-4 right-4 p-2 rounded-full bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all duration-200"
-      aria-label="Toggle theme"
-    >
-      {theme === 'light' ? (
-        <Sun size={24} className="text-yellow-500" />
-      ) : (
-        <Moon size={24} className="text-blue-400" />
-      )}
-    </button>
-  );
-}
+import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
 
 function AppContent() {
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-8 transition-colors duration-200">
-        <ThemeToggle />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Eisenhower Matrix</h1>
           </div>
-          
-          <MatrixProvider>
-            <EisenhowerMatrix />
-          </MatrixProvider>
+
+          <EisenhowerMatrix />
 
           <footer className="mt-12 text-center">
             <div className="inline-flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-full px-4 py-2 shadow-sm hover:shadow-md transition-all duration-200">
@@ -79,7 +61,11 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <AuthProvider>
+        <MatrixProvider>
+          <AppContent />
+        </MatrixProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
