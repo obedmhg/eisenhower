@@ -82,7 +82,14 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
         </button>
         
         {isEditing ? (
-          <div className="flex flex-1 min-w-0 items-center gap-2">
+          <div
+            className="flex flex-1 min-w-0 items-center gap-2"
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                commitEdit();
+              }
+            }}
+          >
             <input
               type="text"
               value={editText}
