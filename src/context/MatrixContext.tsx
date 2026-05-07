@@ -4,7 +4,6 @@ import React, {
   useState,
   useEffect,
   useRef,
-  useCallback,
   ReactNode,
 } from 'react';
 import { Task, SavedMatrix, QuadrantId } from '../types';
@@ -26,8 +25,6 @@ interface MatrixContextType {
   toggleTaskStatus: (taskId: number) => void;
   updateTaskText: (taskId: number, newText: string) => void;
   updateTaskHours: (taskId: number, newHours: number | undefined) => void;
-  getLocalSnapshot: () => Snapshot;
-  applyServerSnapshot: (snapshot: Snapshot) => void;
 }
 
 const MatrixContext = createContext<MatrixContextType | undefined>(undefined);
@@ -97,6 +94,7 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       return;
     }
 
+    hydratedRef.current = false;
     let cancelled = false;
     (async () => {
       try {
@@ -109,7 +107,6 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       } catch (err) {
         if (cancelled) return;
         setSyncError('Failed to load your saved data.');
-        hydratedRef.current = true;
       }
     })();
 
@@ -195,17 +192,6 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setSavedMatrices((prev) => prev.filter((m) => m.id !== matrixId));
   };
 
-  const getLocalSnapshot = useCallback(
-    (): Snapshot => ({ tasks: tasksRef.current, savedMatrices: matricesRef.current }),
-    []
-  );
-
-  const applyServerSnapshot = useCallback((snap: Snapshot) => {
-    setTasks(snap.tasks);
-    setSavedMatrices(snap.savedMatrices);
-    localStorage.removeItem(LS_KEY);
-  }, []);
-
   const value: MatrixContextType = {
     tasks,
     savedMatrices,
@@ -221,8 +207,6 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     toggleTaskStatus,
     updateTaskText,
     updateTaskHours,
-    getLocalSnapshot,
-    applyServerSnapshot,
   };
 
   return <MatrixContext.Provider value={value}>{children}</MatrixContext.Provider>;

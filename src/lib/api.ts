@@ -46,11 +46,6 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(snapshot),
     }),
-  mergeState: (snapshot: Snapshot) =>
-    request<Snapshot>('/api/state-merge', {
-      method: 'POST',
-      body: JSON.stringify(snapshot),
-    }),
 };
 
 export type { User, Snapshot };

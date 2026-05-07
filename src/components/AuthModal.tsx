@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useMatrix } from '../context/MatrixContext';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -21,7 +20,6 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, mode, onClose }) => {
   const { signup, login } = useAuth();
-  const { getLocalSnapshot, applyServerSnapshot } = useMatrix();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -34,11 +32,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, mode, onClose }) => {
     setError(null);
     setBusy(true);
     try {
-      const snapshot = getLocalSnapshot();
-      const merged = mode === 'signup'
-        ? await signup(email, password, snapshot)
-        : await login(email, password, snapshot);
-      applyServerSnapshot(merged);
+      if (mode === 'signup') {
+        await signup(email, password);
+      } else {
+        await login(email, password);
+      }
       setEmail('');
       setPassword('');
       onClose();
@@ -68,8 +66,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, mode, onClose }) => {
 
         <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
           {mode === 'signup'
-            ? 'Your existing local tasks will sync to your account.'
-            : 'Welcome back. Local tasks will merge with your saved data.'}
+            ? 'Create an account to sync your tasks across devices.'
+            : 'Welcome back.'}
         </p>
 
         <form onSubmit={submit} className="space-y-4">

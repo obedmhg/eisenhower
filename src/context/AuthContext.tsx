@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { api, User, Snapshot } from '../lib/api';
+import { api, User } from '../lib/api';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signup: (email: string, password: string, localState: Snapshot) => Promise<Snapshot>;
-  login: (email: string, password: string, localState: Snapshot) => Promise<Snapshot>;
+  signup: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -36,18 +36,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  const signup = useCallback(async (email: string, password: string, localState: Snapshot) => {
+  const signup = useCallback(async (email: string, password: string) => {
     const res = await api.signup(email, password);
     setUser(res.user);
-    const merged = await api.mergeState(localState);
-    return merged;
   }, []);
 
-  const login = useCallback(async (email: string, password: string, localState: Snapshot) => {
+  const login = useCallback(async (email: string, password: string) => {
     const res = await api.login(email, password);
     setUser(res.user);
-    const merged = await api.mergeState(localState);
-    return merged;
   }, []);
 
   const logout = useCallback(async () => {
