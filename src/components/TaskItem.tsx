@@ -9,10 +9,13 @@ interface TaskItemProps {
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
-  const { deleteTask, toggleTaskStatus, updateTaskText } = useMatrix();
+  const { deleteTask, toggleTaskStatus, updateTaskText, updateTaskHours } = useMatrix();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
-  
+  const [editHours, setEditHours] = useState<string>(
+    task.hours !== undefined ? String(task.hours) : ''
+  );
+
   const [{ isDragging }, drag] = useDrag({
     type: 'task',
     item: { id: task.id },
@@ -21,21 +24,38 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
     }),
   });
 
-  const handleEdit = () => {
-    if (isEditing && editText.trim() !== '') {
-      updateTaskText(task.id, editText.trim());
-      setIsEditing(false);
+  const commitEdit = () => {
+    if (editText.trim() === '') return;
+    updateTaskText(task.id, editText.trim());
+    const trimmed = editHours.trim();
+    if (trimmed === '') {
+      updateTaskHours(task.id, undefined);
     } else {
+      const parsed = Number(trimmed);
+      updateTaskHours(
+        task.id,
+        Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined
+      );
+    }
+    setIsEditing(false);
+  };
+
+  const handleEdit = () => {
+    if (isEditing) {
+      commitEdit();
+    } else {
+      setEditText(task.text);
+      setEditHours(task.hours !== undefined ? String(task.hours) : '');
       setIsEditing(true);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && editText.trim() !== '') {
-      updateTaskText(task.id, editText.trim());
-      setIsEditing(false);
+      commitEdit();
     } else if (e.key === 'Escape') {
       setEditText(task.text);
+      setEditHours(task.hours !== undefined ? String(task.hours) : '');
       setIsEditing(false);
     }
   };
@@ -62,20 +82,35 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
         </button>
         
         {isEditing ? (
-          <input
-            type="text"
-            value={editText}
-            onChange={(e) => setEditText(e.target.value)}
-            onKeyDown={handleKeyPress}
-            onBlur={handleEdit}
-            className="flex-1 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500 dark:text-gray-100 min-w-0"
-            autoFocus
-          />
+          <div className="flex flex-1 min-w-0 items-center gap-2">
+            <input
+              type="text"
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              onKeyDown={handleKeyPress}
+              className="flex-1 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500 dark:text-gray-100 min-w-0"
+              autoFocus
+            />
+            <input
+              type="number"
+              value={editHours}
+              onChange={(e) => setEditHours(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="hrs"
+              min="0"
+              step="0.25"
+              inputMode="decimal"
+              className="w-16 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500 dark:text-gray-100"
+            />
+          </div>
         ) : (
           <span className={`text-gray-800 dark:text-gray-100 flex-1 truncate ${
             task.completed ? 'line-through text-gray-500 dark:text-gray-400' : ''
           }`}>
             {task.text}
+            {task.hours !== undefined && (
+              <span className="ml-1 text-gray-500 dark:text-gray-400">({task.hours} hrs)</span>
+            )}
           </span>
         )}
       </div>

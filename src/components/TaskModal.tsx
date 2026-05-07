@@ -12,12 +12,20 @@ interface TaskModalProps {
 const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, quadrantId }) => {
   const { addTask } = useMatrix();
   const [taskText, setTaskText] = useState('');
+  const [hoursInput, setHoursInput] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (taskText.trim()) {
-      addTask(taskText.trim(), quadrantId);
+      const trimmedHours = hoursInput.trim();
+      const parsedHours = trimmedHours === '' ? undefined : Number(trimmedHours);
+      const hours =
+        parsedHours !== undefined && Number.isFinite(parsedHours) && parsedHours >= 0
+          ? parsedHours
+          : undefined;
+      addTask(taskText.trim(), quadrantId, hours);
       setTaskText('');
+      setHoursInput('');
       onClose();
     }
   };
@@ -50,7 +58,18 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, quadrantId }) =>
             className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
             autoFocus
           />
-          
+
+          <input
+            type="number"
+            value={hoursInput}
+            onChange={(e) => setHoursInput(e.target.value)}
+            placeholder="Hours (optional)"
+            min="0"
+            step="0.25"
+            inputMode="decimal"
+            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
+          />
+
           <div className="flex justify-end space-x-3">
             <button
               type="button"

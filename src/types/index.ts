@@ -3,6 +3,7 @@ export interface Task {
   text: string;
   quadrant: QuadrantId;
   completed: boolean;
+  hours?: number;
 }
 
 export interface SavedMatrix {

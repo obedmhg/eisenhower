@@ -16,7 +16,7 @@ interface MatrixContextType {
   savedMatrices: SavedMatrix[];
   syncing: boolean;
   syncError: string | null;
-  addTask: (text: string, quadrant: QuadrantId) => void;
+  addTask: (text: string, quadrant: QuadrantId, hours?: number) => void;
   deleteTask: (id: number) => void;
   moveTask: (taskId: number, targetQuadrant: QuadrantId) => void;
   createNewMatrix: () => void;
@@ -25,6 +25,7 @@ interface MatrixContextType {
   deleteMatrix: (matrixId: number) => void;
   toggleTaskStatus: (taskId: number) => void;
   updateTaskText: (taskId: number, newText: string) => void;
+  updateTaskHours: (taskId: number, newHours: number | undefined) => void;
   getLocalSnapshot: () => Snapshot;
   applyServerSnapshot: (snapshot: Snapshot) => void;
 }
@@ -140,8 +141,9 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
   }, [tasks, savedMatrices, user]);
 
-  const addTask = (text: string, quadrant: QuadrantId) => {
+  const addTask = (text: string, quadrant: QuadrantId, hours?: number) => {
     const newTask: Task = { id: Date.now(), text, quadrant, completed: false };
+    if (hours !== undefined) newTask.hours = hours;
     setTasks((prev) => [...prev, newTask]);
   };
 
@@ -164,6 +166,16 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const updateTaskText = (taskId: number, newText: string) => {
     setTasks((prev) =>
       prev.map((task) => (task.id === taskId ? { ...task, text: newText } : task))
+    );
+  };
+
+  const updateTaskHours = (taskId: number, newHours: number | undefined) => {
+    setTasks((prev) =>
+      prev.map((task) => {
+        if (task.id !== taskId) return task;
+        const { hours: _omit, ...rest } = task;
+        return newHours === undefined ? rest : { ...rest, hours: newHours };
+      })
     );
   };
 
@@ -208,6 +220,7 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     deleteMatrix,
     toggleTaskStatus,
     updateTaskText,
+    updateTaskHours,
     getLocalSnapshot,
     applyServerSnapshot,
   };
