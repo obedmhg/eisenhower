@@ -10,7 +10,7 @@ export const handler: Handler = async (event) => {
 
   try {
     const tasks = await sql`
-      SELECT id, text, quadrant, completed
+      SELECT id, text, quadrant, completed, hours
       FROM tasks
       WHERE user_id = ${session.userId}
       ORDER BY id ASC
@@ -22,12 +22,16 @@ export const handler: Handler = async (event) => {
       ORDER BY id ASC
     `;
     return json(200, {
-      tasks: tasks.map((t: any) => ({
-        id: Number(t.id),
-        text: t.text,
-        quadrant: t.quadrant,
-        completed: t.completed,
-      })),
+      tasks: tasks.map((t: any) => {
+        const out: any = {
+          id: Number(t.id),
+          text: t.text,
+          quadrant: t.quadrant,
+          completed: t.completed,
+        };
+        if (t.hours !== null && t.hours !== undefined) out.hours = Number(t.hours);
+        return out;
+      }),
       savedMatrices: matrices.map((m: any) => ({
         id: Number(m.id),
         title: m.title,

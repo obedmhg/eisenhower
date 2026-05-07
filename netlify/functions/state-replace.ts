@@ -15,6 +15,7 @@ interface Task {
   text: string;
   quadrant: string;
   completed: boolean;
+  hours?: number;
 }
 
 interface SavedMatrix {
@@ -24,16 +25,24 @@ interface SavedMatrix {
 }
 
 function validTask(t: any): t is Task {
-  return (
-    t &&
-    typeof t.id === 'number' &&
-    Number.isFinite(t.id) &&
-    typeof t.text === 'string' &&
-    t.text.length <= 2000 &&
-    typeof t.quadrant === 'string' &&
-    QUADRANTS.has(t.quadrant) &&
-    typeof t.completed === 'boolean'
-  );
+  if (
+    !t ||
+    typeof t.id !== 'number' ||
+    !Number.isFinite(t.id) ||
+    typeof t.text !== 'string' ||
+    t.text.length > 2000 ||
+    typeof t.quadrant !== 'string' ||
+    !QUADRANTS.has(t.quadrant) ||
+    typeof t.completed !== 'boolean'
+  ) {
+    return false;
+  }
+  if (t.hours !== undefined && t.hours !== null) {
+    if (typeof t.hours !== 'number' || !Number.isFinite(t.hours) || t.hours < 0) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function validMatrix(m: any): m is SavedMatrix {
@@ -75,9 +84,10 @@ export const handler: Handler = async (event) => {
     await sql`DELETE FROM saved_matrices WHERE user_id = ${userId}`;
 
     for (const t of tasks as Task[]) {
+      const hours = t.hours === undefined || t.hours === null ? null : t.hours;
       await sql`
-        INSERT INTO tasks (id, user_id, text, quadrant, completed)
-        VALUES (${t.id}, ${userId}, ${t.text}, ${t.quadrant}, ${t.completed})
+        INSERT INTO tasks (id, user_id, text, quadrant, completed, hours)
+        VALUES (${t.id}, ${userId}, ${t.text}, ${t.quadrant}, ${t.completed}, ${hours})
       `;
     }
     for (const m of matrices as SavedMatrix[]) {
