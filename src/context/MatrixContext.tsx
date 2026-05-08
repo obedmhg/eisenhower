@@ -179,8 +179,16 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const createNewMatrix = () => setTasks([]);
 
   const saveMatrix = (title: string) => {
-    const newMatrix: SavedMatrix = { id: Date.now(), title, tasks: [...tasksRef.current] };
-    setSavedMatrices((prev) => [...prev, newMatrix]);
+    const normalized = title.trim().toLowerCase();
+    setSavedMatrices((prev) => {
+      const existingIdx = prev.findIndex((m) => m.title.trim().toLowerCase() === normalized);
+      if (existingIdx !== -1) {
+        const next = [...prev];
+        next[existingIdx] = { ...next[existingIdx], title, tasks: [...tasksRef.current] };
+        return next;
+      }
+      return [...prev, { id: Date.now(), title, tasks: [...tasksRef.current] }];
+    });
   };
 
   const loadMatrix = (matrixId: number) => {
