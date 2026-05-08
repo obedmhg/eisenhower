@@ -60,6 +60,7 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [savedMatrices, setSavedMatrices] = useState<SavedMatrix[]>(
     () => readLocalSnapshot().savedMatrices
   );
+  const [currentMatrixId, setCurrentMatrixId] = useState<number | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
@@ -68,6 +69,7 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tasksRef = useRef(tasks);
   const matricesRef = useRef(savedMatrices);
+  const currentIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     tasksRef.current = tasks;
@@ -75,6 +77,9 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   useEffect(() => {
     matricesRef.current = savedMatrices;
   }, [savedMatrices]);
+  useEffect(() => {
+    currentIdRef.current = currentMatrixId;
+  }, [currentMatrixId]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -91,6 +96,7 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const snap = readLocalSnapshot();
       setTasks(snap.tasks);
       setSavedMatrices(snap.savedMatrices);
+      setCurrentMatrixId(null);
       return;
     }
 
@@ -102,6 +108,7 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         if (cancelled) return;
         setTasks(snap.tasks);
         setSavedMatrices(snap.savedMatrices);
+        setCurrentMatrixId(null);
         localStorage.removeItem(LS_KEY);
         hydratedRef.current = true;
       } catch (err) {
@@ -176,28 +183,36 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     );
   };
 
-  const createNewMatrix = () => setTasks([]);
+  const createNewMatrix = () => {
+    setTasks([]);
+    setCurrentMatrixId(null);
+  };
 
   const saveMatrix = (title: string) => {
-    const normalized = title.trim().toLowerCase();
-    setSavedMatrices((prev) => {
-      const existingIdx = prev.findIndex((m) => m.title.trim().toLowerCase() === normalized);
-      if (existingIdx !== -1) {
-        const next = [...prev];
-        next[existingIdx] = { ...next[existingIdx], title, tasks: [...tasksRef.current] };
-        return next;
-      }
-      return [...prev, { id: Date.now(), title, tasks: [...tasksRef.current] }];
-    });
+    const tasksCopy = [...tasksRef.current];
+    const id = currentIdRef.current;
+    if (id !== null && matricesRef.current.some((m) => m.id === id)) {
+      setSavedMatrices((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, title, tasks: tasksCopy } : m))
+      );
+      return;
+    }
+    const newId = Date.now();
+    setSavedMatrices((prev) => [...prev, { id: newId, title, tasks: tasksCopy }]);
+    setCurrentMatrixId(newId);
   };
 
   const loadMatrix = (matrixId: number) => {
     const matrix = matricesRef.current.find((m) => m.id === matrixId);
-    if (matrix) setTasks([...matrix.tasks]);
+    if (matrix) {
+      setTasks([...matrix.tasks]);
+      setCurrentMatrixId(matrixId);
+    }
   };
 
   const deleteMatrix = (matrixId: number) => {
     setSavedMatrices((prev) => prev.filter((m) => m.id !== matrixId));
+    if (currentIdRef.current === matrixId) setCurrentMatrixId(null);
   };
 
   const value: MatrixContextType = {
