@@ -63,7 +63,9 @@ const EisenhowerMatrix: React.FC = () => {
 
       <Controls />
 
-      <SavedMatrices />
+      <div className="md:hidden">
+        <SavedMatrices />
+      </div>
 
       {modalOpen && activeQuadrant && (
         <TaskModal 

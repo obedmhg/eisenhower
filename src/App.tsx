@@ -1,13 +1,17 @@
+import { useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { Github } from 'lucide-react';
+import { Github, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 import EisenhowerMatrix from './components/EisenhowerMatrix';
 import Header from './components/Header';
+import SavedMatrices from './components/SavedMatrices';
 import { MatrixProvider } from './context/MatrixContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 
 function AppContent() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
@@ -17,7 +21,30 @@ function AppContent() {
             <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Eisenhower Matrix</h1>
           </div>
 
-          <EisenhowerMatrix />
+          <main>
+            <EisenhowerMatrix />
+          </main>
+
+          <button
+            onClick={() => setSidebarOpen((prev) => !prev)}
+            className={`fixed top-24 z-40 flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-r-md shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 ${
+              sidebarOpen ? 'left-80' : 'left-0'
+            }`}
+            aria-label={sidebarOpen ? 'Close saved matrices' : 'Open saved matrices'}
+            aria-expanded={sidebarOpen}
+          >
+            {sidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
+            {!sidebarOpen && <span className="text-sm font-medium hidden sm:inline">Saved</span>}
+          </button>
+
+          <aside
+            className={`fixed top-0 left-0 h-full w-80 bg-gray-50 dark:bg-gray-900 shadow-2xl border-r border-gray-200 dark:border-gray-700 z-30 transform transition-transform duration-300 ease-in-out overflow-y-auto pt-20 px-4 pb-6 ${
+              sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+            aria-hidden={!sidebarOpen}
+          >
+            <SavedMatrices variant="sidebar" />
+          </aside>
 
           <footer className="mt-12 text-center">
             <div className="inline-flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-full px-4 py-2 shadow-sm hover:shadow-md transition-all duration-200">

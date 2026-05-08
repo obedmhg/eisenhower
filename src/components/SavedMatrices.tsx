@@ -3,7 +3,11 @@ import { Trash2, ClipboardCopy, Download } from 'lucide-react';
 import { useMatrix } from '../context/MatrixContext';
 import { SavedMatrix, Task, QuadrantId } from '../types';
 
-const SavedMatrices: React.FC = () => {
+interface SavedMatricesProps {
+  variant?: 'inline' | 'sidebar';
+}
+
+const SavedMatrices: React.FC<SavedMatricesProps> = ({ variant = 'inline' }) => {
   const { savedMatrices, loadMatrix, deleteMatrix } = useMatrix();
 
 const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
@@ -107,11 +111,19 @@ const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
   };
 
   if (savedMatrices.length === 0) {
-    return null;
+    if (variant !== 'sidebar') {
+      return null;
+    }
+    return (
+      <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+        <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">Saved Matrices</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">No saved matrices yet.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+    <div className={`${variant === 'sidebar' ? '' : 'mt-8 '}p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm`}>
       <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Saved Matrices</h3>
       <ul className="space-y-2">
         {savedMatrices.map((matrix) => (
