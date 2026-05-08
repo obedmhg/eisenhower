@@ -62,8 +62,13 @@ const Quadrant: React.FC<QuadrantProps> = ({ info, tasks, onAddTask }) => {
             <TaskItem key={task.id} task={task} />
           ))}
         </ul>
+        {tasks.length > 0 && (
+          <div className="mt-3 pt-2 border-t border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 text-left">
+            Total: {tasks.reduce((sum, t) => sum + (typeof t.hours === 'number' ? t.hours : 0), 0)}h
+          </div>
+        )}
       </div>
-      
+
       <button
         onClick={onAddTask}
         className="absolute bottom-4 right-4 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white p-2 rounded-full flex items-center justify-center transition-colors duration-200 z-10"

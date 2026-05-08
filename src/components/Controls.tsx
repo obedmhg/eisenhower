@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useMatrix } from '../context/MatrixContext';
 
 const Controls: React.FC = () => {
-  const { createNewMatrix, saveMatrix } = useMatrix();
+  const { createNewMatrix, saveMatrix, savedMatrices, currentMatrixId } = useMatrix();
   const [isSaving, setIsSaving] = useState(false);
   const [matrixTitle, setMatrixTitle] = useState('');
 
@@ -14,7 +14,10 @@ const Controls: React.FC = () => {
 
   const handleSaveClick = () => {
     setIsSaving(true);
-    setMatrixTitle(`Matrix - ${new Date().toLocaleDateString()}`);
+    const loaded = currentMatrixId !== null
+      ? savedMatrices.find((m) => m.id === currentMatrixId)
+      : undefined;
+    setMatrixTitle(loaded?.title ?? new Date().toLocaleDateString());
   };
 
   const handleSaveSubmit = (e: React.FormEvent) => {

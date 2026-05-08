@@ -5,6 +5,7 @@ import { Github, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 import EisenhowerMatrix from './components/EisenhowerMatrix';
 import Header from './components/Header';
 import SavedMatrices from './components/SavedMatrices';
+import CurrentMatrixTitle from './components/CurrentMatrixTitle';
 import { MatrixProvider } from './context/MatrixContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
@@ -19,6 +20,7 @@ function AppContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Eisenhower Matrix</h1>
+            <CurrentMatrixTitle />
           </div>
 
           <main>

@@ -28,6 +28,9 @@ const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
     }, {} as Record<QuadrantId, Task[]>);
   };
 
+  const sumHours = (tasks: Task[]) =>
+    tasks.reduce((sum, t) => sum + (typeof t.hours === 'number' ? t.hours : 0), 0);
+
   const tasksGrouped = groupTasksByQuadrant(matrix.tasks);
   let markdown = `# ${matrix.title}\n\n`;
 
@@ -40,9 +43,11 @@ const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
         const hoursSuffix = typeof task.hours === 'number' ? ` (${task.hours}h)` : '';
         markdown += `- ${taskText}${hoursSuffix}\n`;
       });
-      markdown += '\n';
+      markdown += `\n**Total: ${sumHours(tasks)}h**\n\n`;
     }
   });
+
+  markdown += `---\n\n**Matrix Total: ${sumHours(matrix.tasks)}h**\n`;
 
   return markdown;
 };
@@ -78,6 +83,19 @@ const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
           escapeCsvField(typeof task.hours === 'number' ? task.hours : '')
         ].join(','));
       });
+
+      const matrixTotal = matrix.tasks.reduce(
+        (sum, t) => sum + (typeof t.hours === 'number' ? t.hours : 0),
+        0
+      );
+      rows.push([
+        escapeCsvField(matrix.title),
+        'Total',
+        '',
+        '',
+        '',
+        escapeCsvField(matrixTotal)
+      ].join(','));
     });
 
     return rows.join('\n');
@@ -102,7 +120,7 @@ const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
 
   const downloadAllMatricesAsCsv = () => {
     const timestamp = new Date().toISOString().slice(0, 10);
-    downloadFile(`﻿${formatAllMatricesToCsv()}`, `eisenhower-matrices-${timestamp}.csv`, 'text/csv;charset=utf-8;');
+    downloadFile(`﻿${formatAllMatricesToCsv()}`, `timesheet.csv`, 'text/csv;charset=utf-8;');
   };
 
   const exportMatrix = (matrix: SavedMatrix) => {

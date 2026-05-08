@@ -13,6 +13,7 @@ import { api, Snapshot } from '../lib/api';
 interface MatrixContextType {
   tasks: Task[];
   savedMatrices: SavedMatrix[];
+  currentMatrixId: number | null;
   syncing: boolean;
   syncError: string | null;
   addTask: (text: string, quadrant: QuadrantId, hours?: number) => void;
@@ -22,6 +23,7 @@ interface MatrixContextType {
   saveMatrix: (title: string) => void;
   loadMatrix: (matrixId: number) => void;
   deleteMatrix: (matrixId: number) => void;
+  renameMatrix: (matrixId: number, title: string) => void;
   toggleTaskStatus: (taskId: number) => void;
   updateTaskText: (taskId: number, newText: string) => void;
   updateTaskHours: (taskId: number, newHours: number | undefined) => void;
@@ -215,9 +217,16 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (currentIdRef.current === matrixId) setCurrentMatrixId(null);
   };
 
+  const renameMatrix = (matrixId: number, title: string) => {
+    setSavedMatrices((prev) =>
+      prev.map((m) => (m.id === matrixId ? { ...m, title } : m))
+    );
+  };
+
   const value: MatrixContextType = {
     tasks,
     savedMatrices,
+    currentMatrixId,
     syncing,
     syncError,
     addTask,
@@ -227,6 +236,7 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     saveMatrix,
     loadMatrix,
     deleteMatrix,
+    renameMatrix,
     toggleTaskStatus,
     updateTaskText,
     updateTaskHours,
