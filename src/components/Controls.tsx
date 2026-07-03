@@ -17,16 +17,30 @@ const Controls: React.FC = () => {
     const loaded = currentMatrixId !== null
       ? savedMatrices.find((m) => m.id === currentMatrixId)
       : undefined;
-    setMatrixTitle(loaded?.title ?? new Date().toLocaleDateString());
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const yyyy = String(now.getFullYear());
+    setMatrixTitle(loaded?.title ?? `${mm}/${dd}/${yyyy}`);
   };
 
   const handleSaveSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (matrixTitle.trim()) {
-      saveMatrix(matrixTitle.trim());
-      setIsSaving(false);
-      setMatrixTitle('');
+    const title = matrixTitle.trim();
+    if (!title) return;
+    const existing = savedMatrices.find(
+      (m) => m.title === title && m.id !== currentMatrixId
+    );
+    if (existing) {
+      if (!window.confirm(`A matrix named "${title}" already exists. Overwrite it?`)) {
+        return;
+      }
+      saveMatrix(title, existing.id);
+    } else {
+      saveMatrix(title);
     }
+    setIsSaving(false);
+    setMatrixTitle('');
   };
 
   const handleCancel = () => {

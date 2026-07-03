@@ -1,14 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Trash2, ClipboardCopy, Download } from 'lucide-react';
 import { useMatrix } from '../context/MatrixContext';
 import { SavedMatrix, Task, QuadrantId } from '../types';
+import CalendarPicker from './CalendarPicker';
 
 interface SavedMatricesProps {
   variant?: 'inline' | 'sidebar';
 }
 
+const normalizeDateTitle = (title: string): string | null => {
+  const match = title.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return null;
+  const [, m, d, y] = match;
+  return `${m.padStart(2, '0')}/${d.padStart(2, '0')}/${y}`;
+};
+
 const SavedMatrices: React.FC<SavedMatricesProps> = ({ variant = 'inline' }) => {
   const { savedMatrices, loadMatrix, deleteMatrix } = useMatrix();
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
+  const matrixDates = new Set(
+    savedMatrices
+      .map((m) => normalizeDateTitle(m.title))
+      .filter((v): v is string => v !== null)
+  );
 
 const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
   const quadrantTitles: Record<QuadrantId, { title: string, subtitle: string }> = {
@@ -60,7 +75,7 @@ const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
     return str;
   };
 
-  const formatAllMatricesToCsv = () => {
+  const formatMatricesToCsv = (matrices: SavedMatrix[]) => {
     const quadrantTitles: Record<QuadrantId, { title: string, subtitle: string }> = {
       'urgent-important': { title: 'Do', subtitle: 'Urgent & Important' },
       'urgent-not-important': { title: 'Delegate', subtitle: 'Urgent & Not Important' },
@@ -71,7 +86,7 @@ const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
     const header = ['Matrix', 'Quadrant', 'Quadrant Description', 'Task', 'Completed', 'Hours'];
     const rows: string[] = [header.join(',')];
 
-    savedMatrices.forEach(matrix => {
+    matrices.forEach(matrix => {
       matrix.tasks.forEach(task => {
         const q = quadrantTitles[task.quadrant];
         rows.push([
@@ -118,10 +133,32 @@ const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
     URL.revokeObjectURL(url);
   };
 
-  const downloadAllMatricesAsCsv = () => {
-    const timestamp = new Date().toISOString().slice(0, 10);
-    downloadFile(`﻿${formatAllMatricesToCsv()}`, `timesheet.csv`, 'text/csv;charset=utf-8;');
+  const downloadMatricesAsCsv = (matrices: SavedMatrix[]) => {
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = String(now.getFullYear());
+    downloadFile(
+      `﻿${formatMatricesToCsv(matrices)}`,
+      `timesheet-${dd}${mm}${yyyy}.csv`,
+      'text/csv;charset=utf-8;'
+    );
   };
+
+  const handleConfirmCsv = (selectedDates: Set<string>) => {
+    const matrices = savedMatrices.filter((m) => {
+      const key = normalizeDateTitle(m.title);
+      return key !== null && selectedDates.has(key);
+    });
+    if (matrices.length === 0) {
+      setCalendarOpen(false);
+      return;
+    }
+    downloadMatricesAsCsv(matrices);
+    setCalendarOpen(false);
+  };
+
+  const downloadAllAsCsv = () => downloadMatricesAsCsv(savedMatrices);
 
   const exportMatrix = (matrix: SavedMatrix) => {
     const markdown = formatMatrixToMarkdown(matrix);
@@ -191,14 +228,34 @@ const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
             </button>
           )}
           <button
-            onClick={downloadAllMatricesAsCsv}
+            onClick={downloadAllAsCsv}
             className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
             title="Download CSV of all matrices"
           >
             <Download size={16} />
-            <span>Download CSV</span>
+            <span>Download All CSV</span>
+          </button>
+          <button
+            onClick={() => setCalendarOpen(true)}
+            disabled={matrixDates.size === 0}
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            title={
+              matrixDates.size === 0
+                ? 'No matrices with date titles (m/d/yyyy)'
+                : 'Pick days to export'
+            }
+          >
+            <Download size={16} />
+            <span>Download by Date</span>
           </button>
         </div>
+      )}
+      {calendarOpen && (
+        <CalendarPicker
+          matrixDates={matrixDates}
+          onCancel={() => setCalendarOpen(false)}
+          onConfirm={handleConfirmCsv}
+        />
       )}
     </div>
   );

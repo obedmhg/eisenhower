@@ -20,7 +20,7 @@ interface MatrixContextType {
   deleteTask: (id: number) => void;
   moveTask: (taskId: number, targetQuadrant: QuadrantId) => void;
   createNewMatrix: () => void;
-  saveMatrix: (title: string) => void;
+  saveMatrix: (title: string, overwriteId?: number) => void;
   loadMatrix: (matrixId: number) => void;
   deleteMatrix: (matrixId: number) => void;
   renameMatrix: (matrixId: number, title: string) => void;
@@ -190,13 +190,14 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setCurrentMatrixId(null);
   };
 
-  const saveMatrix = (title: string) => {
+  const saveMatrix = (title: string, overwriteId?: number) => {
     const tasksCopy = [...tasksRef.current];
-    const id = currentIdRef.current;
+    const id = overwriteId ?? currentIdRef.current;
     if (id !== null && matricesRef.current.some((m) => m.id === id)) {
       setSavedMatrices((prev) =>
         prev.map((m) => (m.id === id ? { ...m, title, tasks: tasksCopy } : m))
       );
+      setCurrentMatrixId(id);
       return;
     }
     const newId = Date.now();
