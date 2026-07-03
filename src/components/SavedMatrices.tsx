@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, ClipboardCopy, Download } from 'lucide-react';
+import { Trash2, ClipboardCopy, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMatrix } from '../context/MatrixContext';
 import { SavedMatrix, Task, QuadrantId } from '../types';
 import CalendarPicker from './CalendarPicker';
@@ -15,9 +15,20 @@ const normalizeDateTitle = (title: string): string | null => {
   return `${m.padStart(2, '0')}/${d.padStart(2, '0')}/${y}`;
 };
 
+const PAGE_SIZE = 10;
+
 const SavedMatrices: React.FC<SavedMatricesProps> = ({ variant = 'inline' }) => {
   const { savedMatrices, loadMatrix, deleteMatrix } = useMatrix();
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [page, setPage] = useState(0);
+
+  const sortedMatrices = [...savedMatrices].sort((a, b) => b.id - a.id);
+  const totalPages = Math.max(1, Math.ceil(sortedMatrices.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages - 1);
+  const pagedMatrices = sortedMatrices.slice(
+    currentPage * PAGE_SIZE,
+    (currentPage + 1) * PAGE_SIZE
+  );
 
   const matrixDates = new Set(
     savedMatrices
@@ -181,7 +192,7 @@ const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
     <div className={`${variant === 'sidebar' ? '' : 'mt-8 '}p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm`}>
       <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Saved Matrices</h3>
       <ul className="space-y-2">
-        {savedMatrices.map((matrix) => (
+        {pagedMatrices.map((matrix) => (
           <li 
             key={matrix.id}
             className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600"
@@ -216,6 +227,31 @@ const formatMatrixToMarkdown = (matrix: SavedMatrix) => {
           </li>
         ))}
       </ul>
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <button
+            onClick={() => setPage(currentPage - 1)}
+            disabled={currentPage === 0}
+            className="flex items-center space-x-1 px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            aria-label="Previous page"
+          >
+            <ChevronLeft size={16} />
+            <span>Prev</span>
+          </button>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            Page {currentPage + 1} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(currentPage + 1)}
+            disabled={currentPage >= totalPages - 1}
+            className="flex items-center space-x-1 px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            aria-label="Next page"
+          >
+            <span>Next</span>
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
       {savedMatrices.length > 0 && (
         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-2">
           {savedMatrices.length > 1 && (
