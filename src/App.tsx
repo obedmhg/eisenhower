@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { Github, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
+import { Github, PanelLeftOpen, PanelLeftClose, Undo2, Redo2 } from 'lucide-react';
 import EisenhowerMatrix from './components/EisenhowerMatrix';
 import Header from './components/Header';
 import SavedMatrices from './components/SavedMatrices';
 import CurrentMatrixTitle from './components/CurrentMatrixTitle';
-import { MatrixProvider } from './context/MatrixContext';
+import { MatrixProvider, useMatrix } from './context/MatrixContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 
 function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { undo, redo, canUndo, canRedo } = useMatrix();
+  const isMac = /Mac|iP(hone|ad|od)/.test(navigator.userAgent);
+  const modKey = isMac ? 'Cmd' : 'Ctrl';
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -49,6 +52,28 @@ function AppContent() {
           </aside>
 
           <footer className="mt-12 text-center">
+            <div className="mb-4 flex justify-center space-x-3">
+              <button
+                onClick={undo}
+                disabled={!canUndo}
+                title={`Undo (${modKey}+Z)`}
+                aria-label="Undo"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-sm"
+              >
+                <Undo2 size={18} />
+                Undo
+              </button>
+              <button
+                onClick={redo}
+                disabled={!canRedo}
+                title={`Redo (${modKey}+Shift+Z)`}
+                aria-label="Redo"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-sm"
+              >
+                <Redo2 size={18} />
+                Redo
+              </button>
+            </div>
             <div className="inline-flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-full px-4 py-2 shadow-sm hover:shadow-md transition-all duration-200">
               <Github size={20} className="text-gray-700 dark:text-gray-300" />
               <a

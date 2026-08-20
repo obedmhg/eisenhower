@@ -27,12 +27,23 @@ interface MatrixContextType {
   toggleTaskStatus: (taskId: number) => void;
   updateTaskText: (taskId: number, newText: string) => void;
   updateTaskHours: (taskId: number, newHours: number | undefined) => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+}
+
+interface HistoryEntry {
+  tasks: Task[];
+  savedMatrices: SavedMatrix[];
+  currentMatrixId: number | null;
 }
 
 const MatrixContext = createContext<MatrixContextType | undefined>(undefined);
 
 const LS_KEY = 'eisenhowerApp';
 const SYNC_DEBOUNCE_MS = 600;
+const MAX_HISTORY = 50;
 
 export const useMatrix = () => {
   const context = useContext(MatrixContext);
@@ -72,6 +83,10 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const tasksRef = useRef(tasks);
   const matricesRef = useRef(savedMatrices);
   const currentIdRef = useRef<number | null>(null);
+  const undoStackRef = useRef<HistoryEntry[]>([]);
+  const redoStackRef = useRef<HistoryEntry[]>([]);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
 
   useEffect(() => {
     tasksRef.current = tasks;
@@ -82,6 +97,94 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   useEffect(() => {
     currentIdRef.current = currentMatrixId;
   }, [currentMatrixId]);
+
+  const syncHistoryFlags = () => {
+    setCanUndo(undoStackRef.current.length > 0);
+    setCanRedo(redoStackRef.current.length > 0);
+  };
+
+  const currentSnapshot = (): HistoryEntry => ({
+    tasks: tasksRef.current,
+    savedMatrices: matricesRef.current,
+    currentMatrixId: currentIdRef.current,
+  });
+
+  const pushHistory = () => {
+    const snap = currentSnapshot();
+    const top = undoStackRef.current[undoStackRef.current.length - 1];
+    // Two mutators fired from one gesture (TaskItem's commitEdit calls
+    // updateTaskText AND updateTaskHours) capture identical refs because
+    // the refs only advance in a post-commit effect — skip the duplicate
+    // so a single gesture costs a single undo entry.
+    if (
+      top &&
+      top.tasks === snap.tasks &&
+      top.savedMatrices === snap.savedMatrices &&
+      top.currentMatrixId === snap.currentMatrixId
+    ) {
+      return;
+    }
+    undoStackRef.current.push(snap);
+    if (undoStackRef.current.length > MAX_HISTORY) undoStackRef.current.shift();
+    redoStackRef.current = [];
+    syncHistoryFlags();
+  };
+
+  const resetHistory = () => {
+    undoStackRef.current = [];
+    redoStackRef.current = [];
+    syncHistoryFlags();
+  };
+
+  const applyEntry = (entry: HistoryEntry) => {
+    setTasks(entry.tasks);
+    setSavedMatrices(entry.savedMatrices);
+    setCurrentMatrixId(entry.currentMatrixId);
+  };
+
+  const undo = () => {
+    const entry = undoStackRef.current.pop();
+    if (!entry) return;
+    redoStackRef.current.push(currentSnapshot());
+    applyEntry(entry);
+    syncHistoryFlags();
+  };
+
+  const redo = () => {
+    const entry = redoStackRef.current.pop();
+    if (!entry) return;
+    undoStackRef.current.push(currentSnapshot());
+    applyEntry(entry);
+    syncHistoryFlags();
+  };
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const key = e.key.toLowerCase();
+      if (key !== 'z' && key !== 'y') return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((key === 'z' && e.shiftKey) || (key === 'y' && e.ctrlKey && !e.metaKey)) {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+    // undo/redo only touch stable refs and setState functions
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -99,6 +202,7 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       setTasks(snap.tasks);
       setSavedMatrices(snap.savedMatrices);
       setCurrentMatrixId(null);
+      resetHistory();
       return;
     }
 
@@ -111,6 +215,7 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setTasks(snap.tasks);
         setSavedMatrices(snap.savedMatrices);
         setCurrentMatrixId(null);
+        resetHistory();
         localStorage.removeItem(LS_KEY);
         hydratedRef.current = true;
       } catch (err) {
@@ -122,6 +227,8 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return () => {
       cancelled = true;
     };
+    // resetHistory only touches stable refs and setState functions
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading]);
 
   useEffect(() => {
@@ -148,34 +255,40 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, [tasks, savedMatrices, user]);
 
   const addTask = (text: string, quadrant: QuadrantId, hours?: number) => {
+    pushHistory();
     const newTask: Task = { id: Date.now(), text, quadrant, completed: false };
     if (hours !== undefined) newTask.hours = hours;
     setTasks((prev) => [...prev, newTask]);
   };
 
   const deleteTask = (id: number) => {
+    pushHistory();
     setTasks((prev) => prev.filter((task) => task.id !== id));
   };
 
   const moveTask = (taskId: number, targetQuadrant: QuadrantId) => {
+    pushHistory();
     setTasks((prev) =>
       prev.map((task) => (task.id === taskId ? { ...task, quadrant: targetQuadrant } : task))
     );
   };
 
   const toggleTaskStatus = (taskId: number) => {
+    pushHistory();
     setTasks((prev) =>
       prev.map((task) => (task.id === taskId ? { ...task, completed: !task.completed } : task))
     );
   };
 
   const updateTaskText = (taskId: number, newText: string) => {
+    pushHistory();
     setTasks((prev) =>
       prev.map((task) => (task.id === taskId ? { ...task, text: newText } : task))
     );
   };
 
   const updateTaskHours = (taskId: number, newHours: number | undefined) => {
+    pushHistory();
     setTasks((prev) =>
       prev.map((task) => {
         if (task.id !== taskId) return task;
@@ -186,11 +299,13 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const createNewMatrix = () => {
+    pushHistory();
     setTasks([]);
     setCurrentMatrixId(null);
   };
 
   const saveMatrix = (title: string, overwriteId?: number) => {
+    pushHistory();
     const tasksCopy = [...tasksRef.current];
     const id = overwriteId ?? currentIdRef.current;
     if (id !== null && matricesRef.current.some((m) => m.id === id)) {
@@ -208,17 +323,20 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const loadMatrix = (matrixId: number) => {
     const matrix = matricesRef.current.find((m) => m.id === matrixId);
     if (matrix) {
+      pushHistory();
       setTasks([...matrix.tasks]);
       setCurrentMatrixId(matrixId);
     }
   };
 
   const deleteMatrix = (matrixId: number) => {
+    pushHistory();
     setSavedMatrices((prev) => prev.filter((m) => m.id !== matrixId));
     if (currentIdRef.current === matrixId) setCurrentMatrixId(null);
   };
 
   const renameMatrix = (matrixId: number, title: string) => {
+    pushHistory();
     setSavedMatrices((prev) =>
       prev.map((m) => (m.id === matrixId ? { ...m, title } : m))
     );
@@ -241,6 +359,10 @@ export const MatrixProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     toggleTaskStatus,
     updateTaskText,
     updateTaskHours,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   };
 
   return <MatrixContext.Provider value={value}>{children}</MatrixContext.Provider>;
