@@ -26,6 +26,33 @@ function AppContent() {
             <CurrentMatrixTitle />
           </div>
 
+          {(canUndo || canRedo) && (
+            <div className="mb-4 flex justify-center space-x-3">
+              {canUndo && (
+                <button
+                  onClick={undo}
+                  title={`Undo (${modKey}+Z)`}
+                  aria-label="Undo"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:shadow-md transition-all duration-200"
+                >
+                  <Undo2 size={18} />
+                  Undo
+                </button>
+              )}
+              {canRedo && (
+                <button
+                  onClick={redo}
+                  title={`Redo (${modKey}+Shift+Z)`}
+                  aria-label="Redo"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:shadow-md transition-all duration-200"
+                >
+                  <Redo2 size={18} />
+                  Redo
+                </button>
+              )}
+            </div>
+          )}
+
           <main>
             <EisenhowerMatrix />
           </main>
@@ -52,28 +79,6 @@ function AppContent() {
           </aside>
 
           <footer className="mt-12 text-center">
-            <div className="mb-4 flex justify-center space-x-3">
-              <button
-                onClick={undo}
-                disabled={!canUndo}
-                title={`Undo (${modKey}+Z)`}
-                aria-label="Undo"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-sm"
-              >
-                <Undo2 size={18} />
-                Undo
-              </button>
-              <button
-                onClick={redo}
-                disabled={!canRedo}
-                title={`Redo (${modKey}+Shift+Z)`}
-                aria-label="Redo"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-sm"
-              >
-                <Redo2 size={18} />
-                Redo
-              </button>
-            </div>
             <div className="inline-flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-full px-4 py-2 shadow-sm hover:shadow-md transition-all duration-200">
               <Github size={20} className="text-gray-700 dark:text-gray-300" />
               <a
