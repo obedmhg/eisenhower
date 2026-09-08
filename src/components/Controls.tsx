@@ -28,11 +28,11 @@ const Controls: React.FC = () => {
     e.preventDefault();
     const title = matrixTitle.trim();
     if (!title) return;
-    const existing = savedMatrices.find(
-      (m) => m.title === title && m.id !== currentMatrixId
-    );
+    const existing =
+      savedMatrices.find((m) => m.title === title && m.id !== currentMatrixId) ??
+      savedMatrices.find((m) => m.id === currentMatrixId);
     if (existing) {
-      if (!window.confirm(`A matrix named "${title}" already exists. Overwrite it?`)) {
+      if (!window.confirm(`This will overwrite the saved matrix "${existing.title}". Continue?`)) {
         return;
       }
       saveMatrix(title, existing.id);
