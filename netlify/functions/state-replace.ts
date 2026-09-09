@@ -1,7 +1,8 @@
 import type { Handler } from '@netlify/functions';
 import { sql } from './_lib/db';
 import { sessionFromRequest } from './_lib/auth';
-import { badRequest, json, methodNotAllowed, unauthorized, serverError } from './_lib/http';
+import { badRequest, conflict, json, methodNotAllowed, unauthorized, serverError } from './_lib/http';
+import { bumpVersion, loadSnapshot, type SavedMatrix, type Task } from './_lib/state';
 
 const QUADRANTS = new Set([
   'urgent-important',
@@ -9,20 +10,6 @@ const QUADRANTS = new Set([
   'not-urgent-important',
   'not-urgent-not-important',
 ]);
-
-interface Task {
-  id: number;
-  text: string;
-  quadrant: string;
-  completed: boolean;
-  hours?: number;
-}
-
-interface SavedMatrix {
-  id: number;
-  title: string;
-  tasks: Task[];
-}
 
 function validTask(t: any): t is Task {
   if (
@@ -62,7 +49,7 @@ export const handler: Handler = async (event) => {
   const session = sessionFromRequest(event.headers as Record<string, string | undefined>);
   if (!session) return unauthorized();
 
-  let body: { tasks?: unknown; savedMatrices?: unknown };
+  let body: { tasks?: unknown; savedMatrices?: unknown; baseVersion?: unknown };
   try {
     body = JSON.parse(event.body || '{}');
   } catch {
@@ -80,6 +67,21 @@ export const handler: Handler = async (event) => {
   const userId = session.userId;
 
   try {
+    // Optimistic concurrency: the client must echo the version it hydrated
+    // from. A stale tab (or an old deployed client that sends no version)
+    // gets the current snapshot back instead of clobbering newer data.
+    const baseVersion =
+      typeof body.baseVersion === 'number' && Number.isInteger(body.baseVersion) && body.baseVersion >= 0
+        ? body.baseVersion
+        : null;
+    if (baseVersion === null) {
+      return conflict(await loadSnapshot(userId));
+    }
+    const newVersion = await bumpVersion(userId, baseVersion);
+    if (newVersion === null) {
+      return conflict(await loadSnapshot(userId));
+    }
+
     await sql`DELETE FROM tasks WHERE user_id = ${userId}`;
     await sql`DELETE FROM saved_matrices WHERE user_id = ${userId}`;
 
@@ -97,7 +99,7 @@ export const handler: Handler = async (event) => {
       `;
     }
 
-    return json(200, { ok: true, taskCount: tasks.length, matrixCount: matrices.length });
+    return json(200, { ok: true, version: newVersion, taskCount: tasks.length, matrixCount: matrices.length });
   } catch (err) {
     console.error('state_replace_error', err);
     return serverError();

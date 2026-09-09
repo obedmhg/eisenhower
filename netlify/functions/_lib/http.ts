@@ -21,3 +21,7 @@ export function badRequest(msg = 'bad_request') {
 export function serverError(msg = 'server_error') {
   return json(500, { error: msg });
 }
+
+export function conflict(body: object) {
+  return json(409, { error: 'conflict', ...body });
+}

@@ -8,6 +8,18 @@ interface User {
 interface Snapshot {
   tasks: Task[];
   savedMatrices: SavedMatrix[];
+  /** Server-side state version; echoed back on replaceState for conflict detection. */
+  version?: number;
+}
+
+export class ApiError extends Error {
+  status: number;
+  data: unknown;
+  constructor(message: string, status: number, data: unknown) {
+    super(message);
+    this.status = status;
+    this.data = data;
+  }
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -18,11 +30,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     let err = 'request_failed';
+    let data: unknown = null;
     try {
-      const data = await res.json();
-      if (data?.error) err = data.error;
-    } catch {}
-    throw new Error(err);
+      data = await res.json();
+      const msg = (data as { error?: unknown } | null)?.error;
+      if (typeof msg === 'string') err = msg;
+    } catch {
+      // non-JSON error body; keep generic message
+    }
+    throw new ApiError(err, res.status, data);
   }
   return res.json() as Promise<T>;
 }
@@ -41,10 +57,10 @@ export const api = {
     }),
   logout: () => request<{ ok: true }>('/api/auth-logout', { method: 'POST' }),
   getState: () => request<Snapshot>('/api/state-get'),
-  replaceState: (snapshot: Snapshot) =>
-    request<{ ok: true }>('/api/state-replace', {
+  replaceState: (snapshot: Snapshot, baseVersion: number) =>
+    request<{ ok: true; version: number }>('/api/state-replace', {
       method: 'PUT',
-      body: JSON.stringify(snapshot),
+      body: JSON.stringify({ ...snapshot, baseVersion }),
     }),
 };
 

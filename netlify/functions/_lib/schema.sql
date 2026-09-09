@@ -29,3 +29,9 @@ CREATE TABLE IF NOT EXISTS saved_matrices (
 
 CREATE INDEX IF NOT EXISTS tasks_user_idx ON tasks(user_id);
 CREATE INDEX IF NOT EXISTS saved_matrices_user_idx ON saved_matrices(user_id);
+
+-- Per-user state version for optimistic concurrency on state-replace.
+CREATE TABLE IF NOT EXISTS user_state (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  version INTEGER NOT NULL DEFAULT 0
+);
